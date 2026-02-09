@@ -5,11 +5,16 @@ const bcrypt = require('bcryptjs');
 exports.register = async (req, res) => {
     try {
         const { email, password } = req.body;
+        const userExists = await User.findOne({ email });
+
+        if (userExists) {
+            return res.status(400).json({ message: 'User already exists' });
+        }
+
         const user = new User({ email, password });
         await user.save();
-        res.status(201).json({ message: 'User created' });
+        res.status(201).json({ message: 'User created successfully' });
     } catch (err) {
-        console.error("Registration error:", err.message);
         res.status(400).json({ error: err.message });
     }
 };
@@ -17,17 +22,13 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
-        console.log(`Attempting login for: ${email}`);
-
         const user = await User.findOne({ email });
+
         if (!user) {
-            console.log("❌ User not found in database");
             return res.status(401).json({ message: 'Invalid email or password' });
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
-        console.log(`Password match: ${isMatch}`);
-
         if (!isMatch) {
             return res.status(401).json({ message: 'Invalid email or password' });
         }
@@ -38,10 +39,12 @@ exports.login = async (req, res) => {
             { expiresIn: '1h' }
         );
 
-        console.log("✅ Login successful!");
-        res.json({ token, role: user.role });
+        res.json({
+            token,
+            role: user.role,
+            message: "Success"
+        });
     } catch (err) {
-        console.error("Login Error:", err.message);
         res.status(500).json({ error: err.message });
     }
 };

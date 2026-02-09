@@ -1,30 +1,27 @@
-require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
+const dotenv = require('dotenv');
+const path = require('path');
 const cors = require('cors');
 
-const logger = require('./middleware/logger');
-
-const authRoutes = require('./routes/authRoutes');
-const carRoutes = require('./routes/carRoutes');
-const rentalRoutes = require('./routes/rentalRoutes');
+dotenv.config();
 
 const app = express();
 
-app.use(cors());
 app.use(express.json());
-app.use(logger);
+app.use(cors());
+
 app.use(express.static('public'));
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
 mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log('Connected to MongoDB'))
-    .catch(err => console.error('MongoDB Connection Error:', err));
+    .then(() => console.log(' MongoDB Connected'))
+    .catch(err => console.error(' MongoDB Connection Error:', err));
 
-app.use('/api/auth', authRoutes);
-app.use('/api/cars', carRoutes);
-app.use('/api/rentals', rentalRoutes);
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/cars', require('./routes/carRoutes'));
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(` Server running on http://localhost:${PORT}`);
 });

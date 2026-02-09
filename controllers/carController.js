@@ -1,8 +1,33 @@
 const Car = require('../models/Car');
 
+exports.createCar = async (req, res) => {
+    try {
+        const carData = { ...req.body };
+
+        if (req.files && req.files.length > 0) {
+            carData.images = req.files.map(file => `/uploads/${file.filename}`);
+        }
+
+        carData.year = Number(carData.year);
+        carData.pricePerDay = Number(carData.pricePerDay);
+        carData.fuelLevel = Number(carData.fuelLevel);
+
+        const newCar = new Car(carData);
+        await newCar.save();
+        res.status(201).json(newCar);
+    } catch (err) {
+        console.error("Create Car Error:", err);
+        res.status(400).json({ error: err.message });
+    }
+};
+
 exports.getAllCars = async (req, res) => {
-    const cars = await Car.find();
-    res.json(cars);
+    try {
+        const cars = await Car.find();
+        res.json(cars);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 };
 
 exports.getCarById = async (req, res) => {
@@ -11,24 +36,13 @@ exports.getCarById = async (req, res) => {
         if (!car) return res.status(404).json({ message: 'Car not found' });
         res.json(car);
     } catch (err) {
-        res.status(400).json({ message: 'Invalid ID' });
-    }
-};
-
-exports.createCar = async (req, res) => {
-    try {
-        const newCar = new Car(req.body);
-        await newCar.save();
-        res.status(201).json(newCar);
-    } catch (err) {
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: 'Invalid ID' });
     }
 };
 
 exports.updateCar = async (req, res) => {
     try {
         const updatedCar = await Car.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        if (!updatedCar) return res.status(404).json({ message: 'Car not found' });
         res.json(updatedCar);
     } catch (err) {
         res.status(400).json({ error: err.message });
@@ -37,9 +51,8 @@ exports.updateCar = async (req, res) => {
 
 exports.deleteCar = async (req, res) => {
     try {
-        const deletedCar = await Car.findByIdAndDelete(req.params.id);
-        if (!deletedCar) return res.status(404).json({ message: 'Car not found' });
-        res.json({ message: 'Car deleted' });
+        await Car.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Deleted' });
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
